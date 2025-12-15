@@ -1,11 +1,13 @@
 # forms.py
 from django import forms
 from .services import MediaFactory
+from .models import Movie
 
 
 class MediaForm(forms.Form):
     MEDIA_TYPES = [
         ('book', 'Книга'),
+        ('movie', 'Фильм'),
         ('audiobook', 'Аудиокнига'),
     ]
 
@@ -22,9 +24,14 @@ class MediaForm(forms.Form):
     isbn = forms.CharField(max_length=20, required=False, label='ISBN')
     page_count = forms.IntegerField(required=False, label='Количество страниц', min_value=1)
 
-    # Поля для аудиокниг
+    # Поля для аудиокниг и фильмов (общая длительность)
     narrator = forms.CharField(max_length=100, required=False, label='Чтец')
-    audiobook_duration = forms.IntegerField(required=False, label='Длительность аудиокниги (минуты)', min_value=1)
+    duration = forms.IntegerField(required=False, label='Длительность (минуты)', min_value=1)
+
+    # Поля для фильмов
+    format = forms.CharField(max_length=10, required=False, label='Формат')
+    director = forms.CharField(max_length=100, required=False, label='Режиссер')
+    genre = forms.ChoiceField(choices=Movie.GENRE_CHOICES, required=False, label='Жанр')
 
     def __init__(self, *args, **kwargs):
         kwargs.pop('instance', None)
@@ -44,8 +51,19 @@ class MediaForm(forms.Form):
         elif media_type == 'audiobook':
             if not cleaned_data.get('narrator'):
                 self.add_error('narrator', 'Чтец обязателен для аудиокниг')
-            if not cleaned_data.get('audiobook_duration'):
-                self.add_error('audiobook_duration', 'Длительность обязательна для аудиокниг')
+            if not cleaned_data.get('duration'):
+                self.add_error('duration', 'Длительность обязательна для аудиокниг')
+
+        elif media_type == 'movie':
+            if not cleaned_data.get('duration'):
+                self.add_error('duration', 'Длительность обязательна для фильма')
+            if not cleaned_data.get('format'):
+                self.add_error('format', 'Формат обязателен для фильма')
+            if not cleaned_data.get('director'):
+                self.add_error('director', 'Режиссер обязателен для фильма')
+            # Жанр необязателен, но если указан, проверим совпадение
+            if cleaned_data.get('genre') and cleaned_data.get('genre') not in dict(Movie.GENRE_CHOICES):
+                self.add_error('genre', 'Неверный жанр')
 
         return cleaned_data
 
@@ -67,8 +85,15 @@ class MediaForm(forms.Form):
             })
         elif media_type == 'audiobook':
             media_data.update({
-                'duration': self.cleaned_data['audiobook_duration'],
+                'duration': self.cleaned_data['duration'],
                 'narrator': self.cleaned_data['narrator']
+            })
+        elif media_type == 'movie':
+            media_data.update({
+                'duration': self.cleaned_data['duration'],
+                'format': self.cleaned_data['format'],
+                'director': self.cleaned_data['director'],
+                'genre': self.cleaned_data.get('genre', ''),
             })
 
         # Используем фабрику для создания объекта

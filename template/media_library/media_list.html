@@ -4,6 +4,25 @@
 <div class="row">
     <div class="col-12">
         <h1 class="mb-4">Медиатека</h1>
+        <form method="get" class="row g-2 mb-4">
+            <div class="col-auto">
+                <input name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Поиск по названию">
+            </div>
+            <div class="col-auto">
+                <select name="genre" class="form-select">
+                    <option value="">Все жанры</option>
+                    {% for code,label in genres %}
+                    <option value="{{ code }}" {% if request.GET.genre == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <input name="director" value="{{ request.GET.director }}" class="form-control" placeholder="Режиссер">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary">Фильтровать</button>
+            </div>
+        </form>
         
         <!-- Книги -->
         <h2 class="mt-5">Книги</h2>
@@ -19,7 +38,7 @@
                             <small class="text-muted">Страниц: {{ book.page_count }}</small>
                         </p>
                         <div class="action-buttons">
-                            <a href="{% url 'media_library:media_detail' pk=book.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <a href="{% url 'media_library:media_detail' media_type='book' pk=book.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
                             {% if not book.is_borrowed %}
                             <button onclick="performAction('book', {{ book.id }}, 'borrow')" class="btn btn-sm btn-success">Взять</button>
                             {% else %}
@@ -46,11 +65,13 @@
                         <span class="badge bg-success media-badge">Фильм</span>
                         <h5 class="card-title">{{ movie.title }}</h5>
                         <p class="card-text">
-                            <small class="text-muted">Режиссер: {{ movie.creator }}</small><br>
+                            <small class="text-muted">Режиссер: {{ movie.director }}</small><br>
                             <small class="text-muted">Длительность: {{ movie.duration }} мин.</small>
+                            <br>
+                            <small class="text-muted">Рейтинг: {% if movie.get_average_rating %}{{ movie.get_average_rating|floatformat:1 }}{% else %}—{% endif %}</small>
                         </p>
                         <div class="action-buttons">
-                            <a href="{% url 'media_library:media_detail' pk=movie.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <a href="{% url 'media_library:media_detail' media_type='movie' pk=movie.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
                             <button onclick="performAction('movie', {{ movie.id }}, 'download')" class="btn btn-sm btn-secondary">Скачать</button>
                             <button onclick="performAction('movie', {{ movie.id }}, 'play_trailer')" class="btn btn-sm btn-warning">Трейлер</button>
                         </div>
@@ -78,7 +99,7 @@
                             <small class="text-muted">Чтец: {{ audiobook.narrator }}</small>
                         </p>
                         <div class="action-buttons">
-                            <a href="{% url 'media_library:media_detail' pk=audiobook.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <a href="{% url 'media_library:media_detail' media_type='audiobook' pk=audiobook.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
                             <button onclick="performAction('audiobook', {{ audiobook.id }}, 'download')" class="btn btn-sm btn-secondary">Скачать</button>
                             {% if not audiobook.is_borrowed %}
                             <button onclick="performAction('audiobook', {{ audiobook.id }}, 'borrow')" class="btn btn-sm btn-success">Взять</button>

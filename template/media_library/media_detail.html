@@ -14,7 +14,13 @@
                 </span>
                 
                 <h1 class="card-title">{{ media_item.title }}</h1>
-                <p class="card-text"><strong>Автор/Режиссер:</strong> {{ media_item.creator }}</p>
+                <p class="card-text"><strong>Автор/Режиссер:</strong>
+                    {% if media_type == 'movie' %}
+                        {{ media_item.director }}
+                    {% else %}
+                        {{ media_item.creator }}
+                    {% endif %}
+                </p>
                 <p class="card-text"><strong>Дата публикации:</strong> {{ media_item.publication_date }}</p>
                 
                 <!-- Специфичные поля для каждого типа -->
@@ -28,6 +34,8 @@
                 {% elif media_type == 'movie' %}
                 <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
                 <p class="card-text"><strong>Формат:</strong> {{ media_item.format }}</p>
+                <p class="card-text"><strong>Режиссер:</strong> {{ media_item.director }}</p>
+                <p class="card-text"><strong>Жанр:</strong> {{ media_item.get_genre_display }}</p>
                 
                 {% elif media_type == 'audiobook' %}
                 <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
@@ -48,6 +56,55 @@
                         {% endfor %}
                     </div>
                 </div>
+
+                {% if media_type == 'movie' %}
+                <!-- Рейтинг и отзывы -->
+                <div class="mt-4">
+                    <h4>Рейтинг: {% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}—{% endif %}</h4>
+
+                    <div class="mb-3">
+                        <h5>Отзывы:</h5>
+                        <ul class="list-group mb-3">
+                            {% if reviews %}
+                                {% for r in reviews %}
+                                <li class="list-group-item">
+                                    <strong>{{ r.rating }}/5</strong> — {{ r.comment }}
+                                    <div class="text-muted small">{{ r.created_at }}</div>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="list-group-item text-muted">Нет отзывов</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    {% if can_add_review %}
+                    <form method="post" action="{% url 'media_library:media_add_review' media_type=media_type pk=media_item.pk %}">
+                        {% csrf_token %}
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label">Оценка</label>
+                                <select name="rating" class="form-select">
+                                    <option value="">—</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Комментарий</label>
+                                <input name="comment" class="form-control" placeholder="Напишите отзыв (необязательно)">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary">Оставить отзыв</button>
+                            </div>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

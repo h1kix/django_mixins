@@ -12,6 +12,17 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for err in errors %}
+                                <li>{{ field }}: {{ err }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                     
                     <div class="mb-3">
                         <label for="{{ form.media_type.id_for_label }}" class="form-label">Тип медиа</label>
@@ -71,6 +82,20 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.director.id_for_label }}" class="form-label">Режиссер</label>
+                                    {{ form.director }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.genre.id_for_label }}" class="form-label">Жанр</label>
+                                    {{ form.genre }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="audiobook-fields" style="display: none;">
@@ -102,24 +127,33 @@
 
 <script>
     // Показываем/скрываем поля в зависимости от типа медиа
+    function setSectionVisible(sectionId, visible) {
+        const el = document.getElementById(sectionId);
+        if (!el) return;
+        el.style.display = visible ? 'block' : 'none';
+        // Включаем/отключаем все контролы внутри секции, чтобы скрытые поля не отправлялись
+        const controls = el.querySelectorAll('input, select, textarea');
+        controls.forEach(c => c.disabled = !visible);
+    }
+
     document.getElementById('id_media_type').addEventListener('change', function() {
         const mediaType = this.value;
-        
-        // Скрываем все поля
-        document.getElementById('book-fields').style.display = 'none';
-        document.getElementById('movie-fields').style.display = 'none';
-        document.getElementById('audiobook-fields').style.display = 'none';
-        
-        // Показываем соответствующие поля
+
+        // Скрываем все поля (и деактивируем их)
+        setSectionVisible('book-fields', false);
+        setSectionVisible('movie-fields', false);
+        setSectionVisible('audiobook-fields', false);
+
+        // Показываем соответствующие поля (и активируем их)
         if (mediaType === 'book') {
-            document.getElementById('book-fields').style.display = 'block';
+            setSectionVisible('book-fields', true);
         } else if (mediaType === 'movie') {
-            document.getElementById('movie-fields').style.display = 'block';
+            setSectionVisible('movie-fields', true);
         } else if (mediaType === 'audiobook') {
-            document.getElementById('audiobook-fields').style.display = 'block';
+            setSectionVisible('audiobook-fields', true);
         }
     });
-    
+
     // Инициализация при загрузке
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('id_media_type').dispatchEvent(new Event('change'));
